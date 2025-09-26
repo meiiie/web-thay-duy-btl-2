@@ -1,0 +1,1268 @@
+<div class="admin-container">
+  <div class="admin-header">
+    <div class="header-left">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 15l-3-3h6l-3 3z"/>
+          <path d="M12 3v6"/>
+          <path d="M12 21v-6"/>
+          <path d="M3 12h6"/>
+          <path d="M15 12h6"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1>Panel Quản Trị</h1>
+        <p>Quản lý điểm danh và kết quả bầu cử</p>
+      </div>
+    </div>
+    
+    <div class="header-right">
+      <div class="user-info">
+        <div class="user-details">
+          <span class="user-name">{{ getCurrentUser()?.name || 'Admin' }}</span>
+          <span class="login-time" *ngIf="getLoginTime()">Đăng nhập: {{ getLoginTime() }}</span>
+        </div>
+        <button class="logout-btn" (click)="logout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
+          <span>Đăng xuất</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Đang tải dữ liệu...</p>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-grid" *ngIf="!isLoading">
+    <div class="stat-card card">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <h3>{{ getTotalAttendance() }}</h3>
+        <p>Đã điểm danh</p>
+        <small>{{ getAttendanceRate() }}% tổng số</small>
+      </div>
+    </div>
+    
+    <div class="stat-card card">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 12l2 2 4-4"/>
+          <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+          <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <h3>{{ getTotalVotes() }}</h3>
+        <p>Đã bầu cử</p>
+        <small>{{ getVotingRate() }}% người điểm danh</small>
+      </div>
+    </div>
+    
+    <div class="stat-card card">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <h3>{{ getObjectKeys(votingStats).length }}</h3>
+        <p>Ứng cử viên</p>
+        <small>Có phiếu bầu</small>
+      </div>
+    </div>
+    
+    <div class="stat-card card">
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 6v6l4 2"/>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <h3 [class]="'status-' + getElectionStatusColor()">{{ getElectionStatusText() }}</h3>
+        <p>Trạng thái bầu cử</p>
+        <small>{{ totalVotes }} phiếu bầu</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="tab-navigation">
+    <button 
+      [class.active]="activeTab === 'attendance'"
+      (click)="setActiveTab('attendance')"
+      class="tab-btn"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      <span>Điểm danh</span>
+    </button>
+    
+    <button 
+      [class.active]="activeTab === 'voting'"
+      (click)="setActiveTab('voting')"
+      class="tab-btn"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 12l2 2 4-4"/>
+        <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+        <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+      </svg>
+      <span>Bầu cử</span>
+    </button>
+    
+    <button 
+      [class.active]="activeTab === 'roster'"
+      (click)="setActiveTab('roster')"
+      class="tab-btn"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      <span>Danh sách</span>
+    </button>
+    
+    <button 
+      [class.active]="activeTab === 'candidates'"
+      (click)="setActiveTab('candidates')"
+      class="tab-btn"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span>Ứng cử viên</span>
+    </button>
+    
+    <button 
+      [class.active]="activeTab === 'reset'"
+      (click)="setActiveTab('reset')"
+      class="tab-btn tab-btn-danger"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        <line x1="10" y1="11" x2="10" y2="17"/>
+        <line x1="14" y1="11" x2="14" y2="17"/>
+      </svg>
+      <span>Reset Dữ liệu</span>
+    </button>
+    
+  </div>
+
+  <!-- Attendance Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'attendance'">
+    <div class="section-header">
+      <h2>Danh sách điểm danh</h2>
+      <button (click)="exportAttendance()" class="export-btn">
+        📥 Xuất Excel
+      </button>
+    </div>
+    
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>STT</th>
+            <th>CCCD</th>
+            <th>Họ tên</th>
+            <th>MSSV</th>
+            <th>Thời gian điểm danh</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let record of attendanceList; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>{{ record.cccd }}</td>
+            <td>{{ record.roster?.hoten || 'N/A' }}</td>
+            <td>{{ record.roster?.mssv || 'N/A' }}</td>
+            <td>{{ formatDate(record.time) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Voting Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'voting'">
+    <!-- Election Management Section -->
+    <div class="election-management-section">
+      <div class="section-header">
+        <h2>Quản lý cuộc bầu cử</h2>
+        <div class="election-actions">
+          <button 
+            *ngIf="electionStatus?.status === 'active'" 
+            (click)="openEndElectionModal()" 
+            class="btn btn-warning"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+            <span>Kết thúc bầu cử</span>
+          </button>
+          
+          <button 
+            *ngIf="electionStatus?.status === 'ended'" 
+            (click)="openPublishResultsModal()" 
+            class="btn btn-primary"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14,2 14,8 20,8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10,9 9,9 8,9"/>
+            </svg>
+            <span>Công bố kết quả</span>
+          </button>
+          
+          <button (click)="exportVotingResults()" class="btn btn-outline">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7,10 12,15 17,10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Xuất Excel</span>
+          </button>
+        </div>
+      </div>
+      
+      <div class="election-status-info">
+        <div class="status-card" [class]="'status-' + getElectionStatusColor()">
+          <div class="status-icon">
+            <svg *ngIf="electionStatus?.status === 'active'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+            <svg *ngIf="electionStatus?.status === 'ended'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+            <svg *ngIf="electionStatus?.status === 'results_published'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14,2 14,8 20,8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10,9 9,9 8,9"/>
+            </svg>
+          </div>
+          <div class="status-content">
+            <h3>{{ getElectionStatusText() }}</h3>
+            <p *ngIf="electionStatus?.status === 'active'">Cuộc bầu cử đang diễn ra. Cử tri có thể thực hiện bầu cử.</p>
+            <p *ngIf="electionStatus?.status === 'ended'">Cuộc bầu cử đã kết thúc. Có thể xem và công bố kết quả.</p>
+            <p *ngIf="electionStatus?.status === 'results_published'">Kết quả đã được công bố công khai.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section-header">
+      <h2>Kết quả bầu cử</h2>
+    </div>
+    
+    <!-- Voting Statistics -->
+    <div class="voting-stats">
+      <h3>Thống kê phiếu bầu</h3>
+      <div class="stats-list">
+        <div *ngFor="let candidate of getObjectKeys(votingStats)" class="stat-item">
+          <span class="candidate-name">{{ candidate }}</span>
+          <span class="vote-count">{{ votingStats[candidate] }} phiếu</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Detailed Results -->
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>STT</th>
+            <th>Ứng cử viên</th>
+            <th>Họ tên cử tri</th>
+            <th>MSSV</th>
+            <th>Thời gian bầu</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let vote of votingResults; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>{{ vote.candidate }}</td>
+            <td>{{ vote.roster?.hoten || 'N/A' }}</td>
+            <td>{{ vote.roster?.mssv || 'N/A' }}</td>
+            <td>{{ formatDate(vote.voted_at) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Roster Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'roster'">
+    <div class="section-header">
+      <div class="header-info">
+        <h2>Quản lý danh sách cử tri</h2>
+        <p>Thêm, chỉnh sửa và quản lý danh sách cử tri tham gia bầu cử</p>
+      </div>
+      <div class="header-actions">
+        <div class="stats-badge">
+          <span class="count">{{ rosterList.length }}</span>
+          <span class="label">Tổng cử tri</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Professional Add Form -->
+    <div class="add-member-section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <h3>Thêm cử tri mới</h3>
+      </div>
+      
+      <form (ngSubmit)="addRosterMember()" class="professional-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="cccd">Số CCCD</label>
+            <div class="input-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <input 
+                type="text" 
+                id="cccd"
+                [(ngModel)]="newRoster.cccd" 
+                placeholder="Nhập số CCCD (12 chữ số)"
+                maxlength="12"
+                name="cccd"
+                required
+                class="form-input"
+              >
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="hoten">Họ và tên</label>
+            <div class="input-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              <input 
+                type="text" 
+                id="hoten"
+                [(ngModel)]="newRoster.hoten" 
+                placeholder="Nhập họ và tên đầy đủ"
+                name="hoten"
+                required
+                class="form-input"
+              >
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="mssv">Mã sinh viên</label>
+            <div class="input-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+              </svg>
+              <input 
+                type="text" 
+                id="mssv"
+                [(ngModel)]="newRoster.mssv" 
+                placeholder="Nhập mã sinh viên (tùy chọn)"
+                name="mssv"
+                class="form-input"
+              >
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14m-7-7h14"/>
+            </svg>
+            <span>Thêm cử tri</span>
+          </button>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Professional Roster List -->
+    <div class="roster-list-section" *ngIf="rosterList.length > 0">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 12l2 2 4-4"/>
+          <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+          <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+        </svg>
+        <h3>Danh sách cử tri</h3>
+        <div class="list-count">{{ rosterList.length }} người</div>
+      </div>
+      
+      <!-- Excel Import Section -->
+      <div class="excel-import-section">
+        <div class="import-actions">
+          <button type="button" (click)="downloadExcelTemplate()" class="btn btn-outline">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7,10 12,15 17,10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Tải mẫu Excel</span>
+          </button>
+          
+          <div class="file-input-wrapper">
+            <input 
+              type="file" 
+              id="excel-file"
+              (change)="onExcelFileSelected($event)"
+              accept=".xlsx,.xls"
+              class="file-input"
+            >
+            <label for="excel-file" class="btn btn-primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14,2 14,8 20,8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10,9 9,9 8,9"/>
+              </svg>
+              <span>Import Excel</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="roster-table">
+        <div class="table-header">
+          <div class="col-number">#</div>
+          <div class="col-name">Họ tên</div>
+          <div class="col-cccd">CCCD</div>
+          <div class="col-mssv">Mã SV</div>
+          <div class="col-status">Trạng thái</div>
+          <div class="col-actions">Thao tác</div>
+        </div>
+        
+        <div class="table-body">
+          <div *ngFor="let member of paginatedRosterList; let i = index" class="table-row">
+            <div class="col-number">
+              <div class="row-number">{{ i + 1 }}</div>
+            </div>
+            <div class="col-name">
+              <div class="member-info">
+                <div class="member-avatar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </div>
+                <div class="member-details">
+                  <div class="member-name">{{ member.hoten }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-cccd">
+              <div class="cccd-badge">{{ member.cccd }}</div>
+            </div>
+            <div class="col-mssv">
+              <div class="mssv-badge" *ngIf="member.mssv">{{ member.mssv }}</div>
+              <div class="no-mssv" *ngIf="!member.mssv">-</div>
+            </div>
+            <div class="col-status">
+              <div class="status-indicator status-success">
+                <div class="status-dot"></div>
+                <span>Đã đăng ký</span>
+              </div>
+            </div>
+            <div class="col-actions">
+              <button 
+                (click)="deleteRosterMember(member.cccd)"
+                class="btn btn-danger btn-sm"
+                title="Xóa cử tri"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Pagination -->
+      <div class="pagination-section" *ngIf="totalPages > 1">
+        <div class="pagination-info">
+          <span>Hiển thị {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, rosterList.length) }} trong {{ rosterList.length }} kết quả</span>
+        </div>
+        
+        <div class="pagination-controls">
+          <button 
+            type="button" 
+            (click)="prevPage()" 
+            [disabled]="currentPage === 1"
+            class="btn btn-outline btn-sm"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15,18 9,12 15,6"/>
+            </svg>
+            <span>Trước</span>
+          </button>
+          
+          <div class="page-numbers">
+            <button 
+              *ngFor="let page of getPageNumbers()" 
+              type="button"
+              (click)="goToPage(page)"
+              [class.active]="page === currentPage"
+              class="page-btn"
+            >
+              {{ page }}
+            </button>
+          </div>
+          
+          <button 
+            type="button" 
+            (click)="nextPage()" 
+            [disabled]="currentPage === totalPages"
+            class="btn btn-outline btn-sm"
+          >
+            <span>Sau</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9,18 15,12 9,6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div *ngIf="rosterList.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <h3>Chưa có cử tri nào</h3>
+      <p>Bắt đầu bằng cách thêm cử tri đầu tiên vào danh sách</p>
+    </div>
+  </div>
+
+  <!-- Candidates Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'candidates'">
+    <div class="section-header">
+      <div class="header-info">
+        <h2>Quản lý ứng cử viên</h2>
+        <p>Thêm, chỉnh sửa và quản lý danh sách ứng cử viên tham gia bầu cử</p>
+      </div>
+      <div class="header-actions">
+        <div class="stats-badge">
+          <span class="count">{{ candidatesList.length }}</span>
+          <span class="label">Ứng cử viên</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Professional Add Candidate Form -->
+    <div class="add-candidate-section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <h3>Thêm ứng cử viên mới</h3>
+      </div>
+      
+      <form (ngSubmit)="addCandidate()" class="professional-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="candidate-name">Tên ứng cử viên</label>
+            <div class="input-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              <input 
+                type="text" 
+                id="candidate-name"
+                [(ngModel)]="newCandidate.name" 
+                placeholder="Nhập tên ứng cử viên"
+                name="candidate-name"
+                required
+                class="form-input"
+              >
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="candidate-position">Vị trí ứng cử</label>
+            <div class="input-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+              <input 
+                type="text" 
+                id="candidate-position"
+                [(ngModel)]="newCandidate.position" 
+                placeholder="Nhập vị trí ứng cử (VD: Chủ tịch, Phó chủ tịch)"
+                name="candidate-position"
+                required
+                class="form-input"
+              >
+            </div>
+          </div>
+          
+          <div class="form-group full-width">
+            <label for="candidate-description">Mô tả</label>
+            <div class="input-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14,2 14,8 20,8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10,9 9,9 8,9"/>
+              </svg>
+              <textarea 
+                id="candidate-description"
+                [(ngModel)]="newCandidate.description" 
+                placeholder="Nhập mô tả về ứng cử viên (tùy chọn)"
+                name="candidate-description"
+                class="form-textarea"
+              ></textarea>
+            </div>
+          </div>
+          
+          <div class="form-group full-width">
+            <label for="candidate-image">Ảnh ứng cử viên (tùy chọn)</label>
+            <div class="image-upload-section">
+              <div class="image-upload-area" [class.has-image]="imagePreview">
+                <input 
+                  type="file" 
+                  id="candidate-image"
+                  (change)="onImageSelected($event)"
+                  accept="image/*"
+                  class="image-input"
+                >
+                <div class="upload-content" *ngIf="!imagePreview">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7,10 12,15 17,10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  <p>Nhấn để chọn ảnh hoặc kéo thả vào đây</p>
+                  <small>Hỗ trợ: JPG, PNG, GIF (tối đa 5MB)</small>
+                </div>
+                <div class="image-preview" *ngIf="imagePreview">
+                  <img [src]="imagePreview" alt="Preview">
+                  <button type="button" (click)="removeImage()" class="remove-image-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="18" y1="6" x2="6" y2="18"/>
+                      <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14m-7-7h14"/>
+            </svg>
+            <span>Thêm ứng cử viên</span>
+          </button>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Professional Candidates List -->
+    <div class="candidates-list-section" *ngIf="candidatesList.length > 0">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 12l2 2 4-4"/>
+          <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+          <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+        </svg>
+        <h3>Danh sách ứng cử viên</h3>
+        <div class="list-count">{{ candidatesList.length }} người</div>
+      </div>
+      
+      <div class="candidates-table">
+        <div class="table-header">
+          <div class="col-number">#</div>
+          <div class="col-name">Tên ứng cử viên</div>
+          <div class="col-position">Vị trí</div>
+          <div class="col-votes">Phiếu bầu</div>
+          <div class="col-actions">Thao tác</div>
+        </div>
+        
+        <div class="table-body">
+          <div *ngFor="let candidate of candidatesList; let i = index" class="table-row">
+            <div class="col-number">
+              <div class="row-number">{{ i + 1 }}</div>
+            </div>
+            <div class="col-name">
+              <div class="candidate-info">
+                <div class="candidate-avatar">
+                  <img *ngIf="candidate.image_url" [src]="candidate.image_url" [alt]="candidate.name" class="candidate-image">
+                  <svg *ngIf="!candidate.image_url" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </div>
+                <div class="candidate-details">
+                  <div class="candidate-name">{{ candidate.name }}</div>
+                  <div class="candidate-description" *ngIf="candidate.description">{{ candidate.description }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-position">
+              <div class="position-badge" *ngIf="candidate.position">{{ candidate.position }}</div>
+              <div class="no-position" *ngIf="!candidate.position">-</div>
+            </div>
+            <div class="col-votes">
+              <div class="votes-badge">{{ votingStats[candidate.name] || 0 }} phiếu</div>
+            </div>
+            <div class="col-actions">
+              <button 
+                (click)="deleteCandidate(candidate.id!)"
+                class="btn btn-danger btn-sm"
+                title="Xóa ứng cử viên"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div *ngIf="candidatesList.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </div>
+      <h3>Chưa có ứng cử viên nào</h3>
+      <p>Bắt đầu bằng cách thêm ứng cử viên đầu tiên vào danh sách</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- Excel Preview Modal -->
+<div class="modal-overlay" *ngIf="showExcelModal" (click)="closeExcelModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Xem trước dữ liệu Excel</h3>
+      <button type="button" (click)="closeExcelModal()" class="modal-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="preview-info">
+        <p><strong>Tổng số dòng:</strong> {{ excelData.length }}</p>
+        <p><strong>Hiển thị:</strong> 10 dòng đầu tiên</p>
+      </div>
+      
+      <div class="preview-table">
+        <table>
+          <thead>
+            <tr>
+              <th>CCCD</th>
+              <th>Họ và tên</th>
+              <th>MSSV</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of excelPreview">
+              <td>{{ row['CCCD'] }}</td>
+              <td>{{ row['Họ và tên'] }}</td>
+              <td>{{ row['MSSV'] }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" (click)="closeExcelModal()" class="btn btn-secondary">
+        <span>Hủy</span>
+      </button>
+      <button type="button" (click)="importExcelData()" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14,2 14,8 20,8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10,9 9,9 8,9"/>
+        </svg>
+        <span>Xác nhận Import</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- End Election Modal -->
+<div class="modal-overlay" *ngIf="showEndElectionModal" (click)="closeEndElectionModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Kết thúc cuộc bầu cử</h3>
+      <button type="button" (click)="closeEndElectionModal()" class="modal-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="warning-message">
+        <div class="warning-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="warning-content">
+          <h4>Cảnh báo quan trọng</h4>
+          <p>Sau khi kết thúc cuộc bầu cử:</p>
+          <ul>
+            <li>Không thể bầu cử thêm</li>
+            <li>Có thể xem và công bố kết quả</li>
+            <li>Hành động này không thể hoàn tác</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="election-summary">
+        <h4>Tóm tắt cuộc bầu cử</h4>
+        <div class="summary-stats">
+          <div class="summary-item">
+            <span class="label">Tổng cử tri:</span>
+            <span class="value">{{ rosterList.length }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Đã điểm danh:</span>
+            <span class="value">{{ getTotalAttendance() }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Đã bầu cử:</span>
+            <span class="value">{{ getTotalVotes() }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Ứng cử viên:</span>
+            <span class="value">{{ candidatesList.length }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" (click)="closeEndElectionModal()" class="btn btn-secondary">
+        <span>Hủy</span>
+      </button>
+      <button type="button" (click)="endElection()" class="btn btn-warning">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 6v6l4 2"/>
+        </svg>
+        <span>Kết thúc bầu cử</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Publish Results Modal -->
+<div class="modal-overlay" *ngIf="showPublishResultsModal" (click)="closePublishResultsModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Công bố kết quả bầu cử</h3>
+      <button type="button" (click)="closePublishResultsModal()" class="modal-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="warning-message">
+        <div class="warning-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="warning-content">
+          <h4>Cảnh báo quan trọng</h4>
+          <p>Sau khi công bố kết quả:</p>
+          <ul>
+            <li>Kết quả sẽ được hiển thị công khai</li>
+            <li>Không thể thay đổi kết quả</li>
+            <li>Hành động này không thể hoàn tác</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="results-preview" *ngIf="electionResults.length > 0">
+        <h4>Xem trước kết quả</h4>
+        <div class="results-list">
+          <div *ngFor="let result of electionResults.slice(0, 5); let i = index" class="result-item">
+            <div class="rank">{{ i + 1 }}</div>
+            <div class="candidate-name">{{ result.candidate }}</div>
+            <div class="vote-info">
+              <span class="votes">{{ result.votes }} phiếu</span>
+              <span class="percentage">{{ result.percentage }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" (click)="closePublishResultsModal()" class="btn btn-secondary">
+        <span>Hủy</span>
+      </button>
+      <button type="button" (click)="publishResults()" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14,2 14,8 20,8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10,9 9,9 8,9"/>
+        </svg>
+        <span>Công bố kết quả</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Data Tab -->
+<div class="tab-content" *ngIf="activeTab === 'reset'">
+  <div class="section-header">
+    <div class="header-content">
+      <h2>Reset Dữ liệu</h2>
+      <p>Xóa toàn bộ dữ liệu để tổ chức lại sự kiện bầu cử mới</p>
+    </div>
+    <div class="header-actions">
+      <div class="warning-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span>Nguy hiểm</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current Data Summary -->
+  <div class="data-summary card">
+    <h3>Tổng quan dữ liệu hiện tại</h3>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div class="item-content">
+          <span class="count">{{ rosterList.length }}</span>
+          <span class="label">Cử tri</span>
+        </div>
+      </div>
+      
+      <div class="summary-item">
+        <div class="item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div class="item-content">
+          <span class="count">{{ getTotalAttendance() }}</span>
+          <span class="label">Đã điểm danh</span>
+        </div>
+      </div>
+      
+      <div class="summary-item">
+        <div class="item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 12l2 2 4-4"/>
+            <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+            <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+          </svg>
+        </div>
+        <div class="item-content">
+          <span class="count">{{ getTotalVotes() }}</span>
+          <span class="label">Phiếu bầu</span>
+        </div>
+      </div>
+      
+      <div class="summary-item">
+        <div class="item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+            <path d="M12 13a4 4 0 0 1 4 4v2"/>
+          </svg>
+        </div>
+        <div class="item-content">
+          <span class="count">{{ candidatesList.length }}</span>
+          <span class="label">Ứng cử viên</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Options -->
+  <div class="reset-options">
+    <div class="reset-section">
+      <h3>Reset từng phần</h3>
+      <p>Xóa dữ liệu theo từng loại để có thể tổ chức lại từng phần</p>
+      
+      <div class="reset-buttons">
+        <button class="reset-btn reset-btn-attendance" (click)="resetAttendanceOnly()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <div class="btn-content">
+            <span class="btn-title">Reset Điểm danh</span>
+            <span class="btn-desc">Xóa {{ getTotalAttendance() }} bản ghi điểm danh</span>
+          </div>
+        </button>
+        
+        <button class="reset-btn reset-btn-voting" (click)="resetVotingOnly()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 12l2 2 4-4"/>
+            <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+            <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+          </svg>
+          <div class="btn-content">
+            <span class="btn-title">Reset Bầu cử</span>
+            <span class="btn-desc">Xóa {{ getTotalVotes() }} phiếu bầu</span>
+          </div>
+        </button>
+
+        <button class="reset-btn reset-btn-election" (click)="resetElectionStatus()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+          <div class="btn-content">
+            <span class="btn-title">Reset Trạng thái</span>
+            <span class="btn-desc">Đặt lại trạng thái cuộc bầu cử về "Đang diễn ra"</span>
+          </div>
+        </button>
+        
+        <button class="reset-btn reset-btn-candidates" (click)="resetCandidatesOnly()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+            <path d="M12 13a4 4 0 0 1 4 4v2"/>
+          </svg>
+          <div class="btn-content">
+            <span class="btn-title">Reset Ứng cử viên</span>
+            <span class="btn-desc">Xóa {{ candidatesList.length }} ứng cử viên</span>
+          </div>
+        </button>
+        
+        <button class="reset-btn reset-btn-roster" (click)="resetRosterOnly()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <div class="btn-content">
+            <span class="btn-title">Reset Cử tri</span>
+            <span class="btn-desc">Xóa {{ rosterList.length }} cử tri và dữ liệu liên quan</span>
+          </div>
+        </button>
+      </div>
+    </div>
+    
+    <div class="reset-section reset-section-danger">
+      <h3>Reset toàn bộ</h3>
+      <p>Xóa tất cả dữ liệu để tổ chức lại sự kiện hoàn toàn mới</p>
+      
+      <div class="danger-warning">
+        <div class="warning-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="warning-content">
+          <h4>Cảnh báo nguy hiểm!</h4>
+          <p>Hành động này sẽ xóa vĩnh viễn:</p>
+          <ul>
+            <li>Tất cả danh sách cử tri</li>
+            <li>Tất cả dữ liệu điểm danh</li>
+            <li>Tất cả phiếu bầu</li>
+            <li>Tất cả ứng cử viên</li>
+            <li>Reset trạng thái cuộc bầu cử về "active"</li>
+          </ul>
+          <p><strong>Hành động này không thể hoàn tác!</strong></p>
+        </div>
+      </div>
+      
+      <button class="reset-btn reset-btn-danger" (click)="openResetDataModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          <line x1="10" y1="11" x2="10" y2="17"/>
+          <line x1="14" y1="11" x2="14" y2="17"/>
+        </svg>
+        <div class="btn-content">
+          <span class="btn-title">Reset Toàn Bộ Dữ liệu</span>
+          <span class="btn-desc">Xóa tất cả dữ liệu và tổ chức lại sự kiện mới</span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Data Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showResetDataModal" (click)="closeResetDataModal()">
+  <div class="modal-content modal-danger" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Xác nhận Reset Toàn Bộ Dữ liệu</h3>
+      <button type="button" (click)="closeResetDataModal()" class="modal-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="danger-warning">
+        <div class="warning-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="warning-content">
+          <h4>Cảnh báo nguy hiểm!</h4>
+          <p>Bạn sắp xóa vĩnh viễn tất cả dữ liệu:</p>
+          <ul>
+            <li><strong>{{ rosterList.length }}</strong> cử tri</li>
+            <li><strong>{{ getTotalAttendance() }}</strong> điểm danh</li>
+            <li><strong>{{ getTotalVotes() }}</strong> phiếu bầu</li>
+            <li><strong>{{ candidatesList.length }}</strong> ứng cử viên</li>
+          </ul>
+          <p><strong>Hành động này không thể hoàn tác!</strong></p>
+        </div>
+      </div>
+      
+      <div class="confirmation-input">
+        <label for="resetConfirmation">Để xác nhận, vui lòng nhập <strong>RESET</strong> vào ô bên dưới:</label>
+        <input
+          type="text"
+          id="resetConfirmation"
+          [(ngModel)]="resetDataConfirmation"
+          placeholder="Nhập RESET"
+          [disabled]="isResettingData"
+        >
+      </div>
+      
+      @if (resetDataResult) {
+        <div class="result-message" [class.success]="resetDataResult.success" [class.error]="!resetDataResult.success">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            @if (resetDataResult.success) {
+              <path d="M9 12l2 2 4-4"/>
+              <circle cx="12" cy="12" r="10"/>
+            } @else {
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+            }
+          </svg>
+          <span>{{ resetDataResult.message }}</span>
+        </div>
+      }
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" (click)="closeResetDataModal()" class="btn btn-secondary" [disabled]="isResettingData">
+        <span>Hủy</span>
+      </button>
+      <button 
+        type="button" 
+        (click)="confirmResetData()" 
+        class="btn btn-danger" 
+        [disabled]="isResettingData || resetDataConfirmation !== 'RESET'"
+      >
+        @if (isResettingData) {
+          <svg class="spinner" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="31.416" stroke-dashoffset="31.416">
+              <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
+              <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+          <span>Đang reset...</span>
+        } @else {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            <line x1="10" y1="11" x2="10" y2="17"/>
+            <line x1="14" y1="11" x2="14" y2="17"/>
+          </svg>
+          <span>Xác nhận Reset</span>
+        }
+      </button>
+    </div>
+  </div>
+</div>

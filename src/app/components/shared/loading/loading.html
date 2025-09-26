@@ -1,0 +1,19 @@
+<div class="loading-container" [class.fullscreen]="fullscreen">
+  <div class="loading-content">
+    <div class="loading-spinner">
+      <div class="spinner-ring"></div>
+      <div class="spinner-ring"></div>
+      <div class="spinner-ring"></div>
+    </div>
+    <div class="loading-text">
+      <h3>{{ title }}</h3>
+      <p>{{ message }}</p>
+    </div>
+    <div class="loading-progress" *ngIf="showProgress">
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="progress"></div>
+      </div>
+      <div class="progress-text">{{ progress }}%</div>
+    </div>
+  </div>
+</div>
