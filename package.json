@@ -4,10 +4,11 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "fix-deps": "powershell -ExecutionPolicy Bypass -File fix-windows-deps.ps1"
+    "fix-deps": "powershell -ExecutionPolicy Bypass -File fix-windows-deps.ps1",
+    "vercel-build": "ng build --configuration production"
   },
   "prettier": {
     "printWidth": 100,

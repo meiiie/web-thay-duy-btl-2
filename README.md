@@ -1,195 +1,138 @@
-# 🏛️ Hệ Thống Điểm Danh & Bầu Cử
+# Voting Attendance App
 
-Ứng dụng web Angular để quét mã QR từ CCCD/VNeID cho việc điểm danh và bầu cử trực tuyến.
+Ứng dụng web điểm danh và bầu cử cho đại hội đoàn thanh niên, được xây dựng với Angular 20 và Supabase.
 
-## ✨ Tính năng chính
+## Tính năng chính
 
-### 📱 Điểm danh bằng QR Code
-- Quét mã QR từ CCCD hoặc VNeID qua webcam
-- Trích xuất số CCCD (12 chữ số) làm khóa chính
-- Kiểm tra danh sách đại biểu trong database
-- Tự động tạo mã phiếu bầu cử sau khi điểm danh thành công
-- Fallback options: Upload ảnh QR hoặc nhập thủ công CCCD/MSSV
+- **Điểm danh**: Quét QR code từ CCCD/VNeID hoặc nhập thủ công
+- **Bầu cử**: Bỏ phiếu cho các ứng cử viên
+- **Dashboard**: Theo dõi thống kê real-time
+- **Admin**: Quản lý danh sách, ứng cử viên, và kết quả
 
-### 🗳️ Hệ thống bầu cử
-- Xác thực mã phiếu trước khi bầu cử
-- Chọn ứng cử viên từ danh sách có sẵn
-- Mỗi mã phiếu chỉ sử dụng được một lần
-- Lưu trữ kết quả bầu cử minh bạch
+## Công nghệ sử dụng
 
-### ⚙️ Panel quản trị
-- Quản lý danh sách đại biểu
-- Thêm/xóa ứng cử viên
-- Xem thống kê điểm danh và bầu cử
-- Xuất báo cáo Excel
-- Theo dõi kết quả real-time
+- **Frontend**: Angular 20.3.0 với standalone components
+- **Backend**: Supabase (PostgreSQL + Auth + Storage)
+- **QR Scanner**: ZXing Library
+- **UI/UX**: Responsive design với SCSS
 
-## 🛠️ Công nghệ sử dụng
+## Cài đặt và chạy local
 
-- **Frontend**: Angular 20+ với TypeScript
-- **Backend**: Supabase (PostgreSQL + Real-time APIs)
-- **QR Scanner**: ZXing Browser Library
-- **UI**: SCSS với responsive design
-- **Deployment**: Vercel/Netlify ready
-
-## 📋 Yêu cầu hệ thống
-
-- Node.js 18+ 
-- npm hoặc yarn
-- Webcam cho tính năng quét QR
-- HTTPS cho truy cập webcam (production)
-
-## 🚀 Cài đặt và chạy
-
-### 1. Clone và cài đặt dependencies
 ```bash
-git clone <repository-url>
+# Clone repository
+git clone <your-repo-url>
 cd voting-attendance-app
+
+# Cài đặt dependencies
 npm install
+
+# Cấu hình environment
+cp src/environments/environment.example.ts src/environments/environment.ts
+# Cập nhật Supabase URL và API key trong environment.ts
+
+# Chạy development server
+npm start
+
+# Mở trình duyệt tại http://localhost:4200
 ```
 
-### 2. Thiết lập Supabase Database
-1. Tạo project mới trên [Supabase](https://supabase.com)
-2. Chạy file `database-schema.sql` trong SQL Editor
-3. Cập nhật environment variables trong `src/environments/`
+## Deploy lên Vercel
 
-### 3. Chạy ứng dụng
-```bash
-# Development
-ng serve
+### 1. Chuẩn bị
 
-# Production build
-ng build --configuration production
+- Đã push code lên GitHub
+- Đã tạo tài khoản Vercel
+- Đã cấu hình Supabase
+
+### 2. Deploy
+
+1. **Kết nối GitHub với Vercel:**
+   - Đăng nhập vào [vercel.com](https://vercel.com)
+   - Click "New Project"
+   - Import repository từ GitHub
+
+2. **Cấu hình Environment Variables:**
+   ```
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_ANON_KEY=your-anon-key
+   ```
+
+3. **Deploy:**
+   - Vercel sẽ tự động detect Angular project
+   - Sử dụng file `vercel.json` đã cấu hình
+   - Build command: `npm run vercel-build`
+   - Output directory: `dist/voting-attendance-app/browser`
+
+### 3. Cấu hình Domain (Optional)
+
+- Vào Project Settings > Domains
+- Thêm custom domain nếu cần
+
+## Cấu trúc dự án
+
+```
+src/
+├── app/
+│   ├── components/
+│   │   ├── home/           # Trang chủ
+│   │   ├── qr-scanner/     # Quét QR code
+│   │   ├── voting/         # Bỏ phiếu
+│   │   ├── dashboard/      # Thống kê
+│   │   ├── admin/          # Quản trị
+│   │   └── Thamkhoa/       # Component tham khảo
+│   ├── services/
+│   │   ├── supabase.service.ts    # API Supabase
+│   │   ├── auth.service.ts        # Authentication
+│   │   └── notification.service.ts # Thông báo
+│   ├── guards/
+│   │   └── auth.guard.ts          # Bảo vệ routes
+│   └── app.routes.ts              # Routing
+├── environments/
+│   └── environment.ts             # Cấu hình môi trường
+└── styles/
+    └── styles.scss                # Global styles
 ```
 
-Truy cập: `http://localhost:4200`
+## Database Schema
 
-## 📊 Cấu trúc Database
+### Tables chính:
+- `roster`: Danh sách đại biểu
+- `attendance`: Điểm danh
+- `votes`: Phiếu bầu
+- `candidates`: Ứng cử viên
+- `election_status`: Trạng thái bầu cử
 
-### Bảng `roster` (Danh sách đại biểu)
-```sql
-- id: SERIAL PRIMARY KEY
-- cccd: VARCHAR(12) UNIQUE (khóa chính)
-- hoten: VARCHAR(255) (Họ tên)
-- mssv: VARCHAR(20) (Mã số sinh viên)
-- lop: VARCHAR(50) (Lớp)
-- created_at: TIMESTAMP
-```
+## API Endpoints
 
-### Bảng `attendance` (Điểm danh)
-```sql
-- id: SERIAL PRIMARY KEY
-- cccd: VARCHAR(12) REFERENCES roster(cccd)
-- time: TIMESTAMP (Thời gian điểm danh)
-- created_at: TIMESTAMP
-```
+Tất cả API được quản lý qua Supabase service:
+- `getRosterByCCCD()`: Tìm đại biểu theo CCCD
+- `markAttendance()`: Điểm danh
+- `castVote()`: Bỏ phiếu
+- `getVotingResults()`: Kết quả bầu cử
 
-### Bảng `codes` (Mã phiếu bầu cử)
-```sql
-- id: SERIAL PRIMARY KEY
-- code: VARCHAR(8) UNIQUE (Mã phiếu)
-- cccd: VARCHAR(12) REFERENCES roster(cccd)
-- used: BOOLEAN (Đã sử dụng chưa)
-- created_at: TIMESTAMP
-```
+## Troubleshooting
 
-### Bảng `votes` (Phiếu bầu)
-```sql
-- id: SERIAL PRIMARY KEY
-- code: VARCHAR(8) REFERENCES codes(code)
-- candidate: VARCHAR(255) (Tên ứng cử viên)
-- time: TIMESTAMP (Thời gian bầu)
-- created_at: TIMESTAMP
-```
+### Lỗi thường gặp:
 
-### Bảng `candidates` (Ứng cử viên)
-```sql
-- id: SERIAL PRIMARY KEY
-- name: VARCHAR(255) (Tên ứng cử viên)
-- position: VARCHAR(255) (Vị trí ứng cử)
-- description: TEXT (Mô tả)
-- active: BOOLEAN (Có hoạt động không)
-- created_at: TIMESTAMP
-```
+1. **QR Scanner không hoạt động:**
+   - Kiểm tra quyền camera
+   - Thử refresh trang
+   - Sử dụng upload ảnh thay thế
 
-## 🔧 Cấu hình Environment
+2. **Lỗi kết nối Supabase:**
+   - Kiểm tra environment variables
+   - Kiểm tra network connection
+   - Kiểm tra Supabase project status
 
-Cập nhật file `src/environments/environment.ts`:
+3. **Build lỗi trên Vercel:**
+   - Kiểm tra Node.js version
+   - Kiểm tra dependencies
+   - Kiểm tra build logs
 
-```typescript
-export const environment = {
-  production: false,
-  supabase: {
-    url: 'YOUR_SUPABASE_URL',
-    anonKey: 'YOUR_SUPABASE_ANON_KEY'
-  }
-};
-```
+## Liên hệ
 
-## 📱 Hướng dẫn sử dụng
+Nếu có vấn đề, vui lòng tạo issue trên GitHub repository.
 
-### Cho người điểm danh:
-1. Truy cập trang "Điểm Danh"
-2. Cho phép truy cập webcam
-3. Đưa CCCD/VNeID vào khung hình camera
-4. Nhận mã phiếu sau khi điểm danh thành công
+## License
 
-### Cho người bầu cử:
-1. Truy cập trang "Bầu Cử"
-2. Nhập mã phiếu nhận được
-3. Chọn ứng cử viên muốn bầu
-4. Xác nhận bầu cử
-
-### Cho quản trị viên:
-1. Truy cập trang "Quản Trị"
-2. Quản lý danh sách đại biểu và ứng cử viên
-3. Xem thống kê và xuất báo cáo
-
-## 🔒 Bảo mật
-
-- Row Level Security (RLS) được bật trên tất cả bảng
-- Mã phiếu được tạo ngẫu nhiên và chỉ sử dụng một lần
-- Kiểm tra tính hợp lệ của CCCD trước khi điểm danh
-- HTTPS bắt buộc cho truy cập webcam
-
-## 🚀 Deployment
-
-### Vercel
-```bash
-npm install -g vercel
-vercel --prod
-```
-
-### Netlify
-```bash
-ng build --configuration production
-# Upload dist/ folder to Netlify
-```
-
-## 📝 Ghi chú quan trọng
-
-1. **HTTPS**: Webcam chỉ hoạt động trên HTTPS hoặc localhost
-2. **QR Format**: Hệ thống hỗ trợ nhiều định dạng QR từ CCCD/VNeID
-3. **Fallback**: Có tùy chọn upload ảnh hoặc nhập thủ công khi webcam lỗi
-4. **Real-time**: Supabase cung cấp real-time updates cho admin panel
-5. **Responsive**: Giao diện tương thích với mobile và desktop
-
-## 🤝 Đóng góp
-
-1. Fork repository
-2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Mở Pull Request
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
-## 📞 Hỗ trợ
-
-Nếu gặp vấn đề, vui lòng tạo issue trên GitHub hoặc liên hệ qua email.
-
----
-
-**Lưu ý**: Đây là ứng dụng MVP cho mục đích học tập và demo. Trong môi trường production thực tế, cần thêm các biện pháp bảo mật và xác thực nghiêm ngặt hơn."# web-thay-duy-btl-2" 
+MIT License
