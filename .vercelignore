@@ -5,7 +5,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # Development files
-src/
 .editorconfig
 .gitignore
 README.md
